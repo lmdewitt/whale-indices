@@ -1,1 +1,1 @@
-Sitemap: https://lmdewitt.github.io/dashboard/sitemap.xml
+Sitemap: https://lmdewitt.github.io/whale-indices/sitemap.xml
