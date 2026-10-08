@@ -1,8 +1,9 @@
 project:
   type: website
-
+  resources:
+    - "crab_layers/*"
 website:
-  title: "CCIEA Indicator Dashboard"
+  title: "Whale Entanglement Indicators"
   favicon: "images/favicon.ico"
   back-to-top-navigation: true
   page-footer:
@@ -23,7 +24,7 @@ website:
         href: https://www.commerce.gov/
   search: false
   navbar:
-    title: "CCIEA Indicator Dashboard"
+    title: "Whale Entanglement Indicators"
     background: "#276189"
     collapse: false
     search: false

@@ -1,25 +1,24 @@
-Group,title,viz,color,dset,name,query_parameter,query_value,right_axis,ylabel,y2label,table,climatology,clim_dset,clim_timeseries
-Large Scale Oceanographic Indicators,Pacific Decadal Oscillation Index,TRUE,#4da82b,cciea_OC_PDO,PDO,index,PDO,,,,cciea_current_dsets,,,
-Large Scale Oceanographic Indicators,Oceanic Nino Index,TRUE,#1f96a8,cciea_OC_ONI,ONI,index,ONI,,,,cciea_current_dsets,,,
-Large Scale Oceanographic Indicators,North Pacific High,TRUE,#1e2ad4,cciea_OC_NPH,nph_area,index,Monthly North Pacific High Area,,,,cciea_current_dsets,,,
-Large Scale Oceanographic Indicators,North Pacific Gyre Oscillation Index,TRUE,#c2291b,cciea_OC_NPGO,NPGO,index,NPGO,,,,cciea_current_dsets,,,
-Large Scale Oceanographic Indicators,Extratropical-based Northern Oscillation Index,TRUE,#ed9f08,cciea_OC_NOI,NOI,index,NOI,,,,cciea_current_dsets,,,
-Upwelling Index,Coastal Upwelling Transport Index (45N),FALSE,#4da82b,cciea_OC_CUTI,cuti,lat,45N,,CUTI,,cciea_current_dsets,yes,erdUIClim,CUTI
-Upwelling Index,Biologically Effective Upwelling Transport Index (45N),FALSE,#1f96a8,cciea_OC_BEUTI,beuti,lat,45N,yes,,BEUTI Bakun,cciea_current_dsets,yes,erdUIClim,BEUTI
-Upwelling Index,Bakun Upwelling Index (45N),FALSE,#1e2ad4,cciea_OC_UI,upwelling_index,lat,45N,yes,,BEUTI Bakun,cciea_current_dsets,yes,erdUIClim,Bakun
-Upwelling Index,Coastal Upwelling Transport Index (39N),TRUE,#c2291b,cciea_OC_CUTI,cuti,lat,39N,,CUTI,,cciea_current_dsets,yes,erdUIClim,CUTI
-Upwelling Index,Biologically Effective Upwelling Transport Index (39N),FALSE,#ed9f08,cciea_OC_BEUTI,beuti,lat,39N,yes,,BEUTI Bakun,cciea_current_dsets,yes,erdUIClim,BEUTI
-Upwelling Index,Bakun Upwelling Index (39N),TRUE,#9A6324,cciea_OC_UI,upwelling_index,lat,39N,yes,,BEUTI Bakun,cciea_current_dsets,yes,erdUIClim,Bakun
-Upwelling Index,Coastal Upwelling Transport Index (33N),FALSE,#4b008a,cciea_OC_CUTI,cuti,lat,33N,,CUTI,,cciea_current_dsets,yes,erdUIClim,CUTI
-Upwelling Index,Biologically Effective Upwelling Transport Index (33N),FALSE,#f032e6,cciea_OC_BEUTI,beuti,lat,33N,yes,,BEUTI Bakun,cciea_current_dsets,yes,erdUIClim,BEUTI
-Upwelling Index,Bakun Upwelling Index (33N),FALSE,#808000,cciea_OC_UI,upwelling_index,lat,33N,yes,,BEUTI Bakun,cciea_current_dsets,yes,erdUIClim,Bakun
-Upwelling Index - Daily,Bakun Upwelling Index (45N),TRUE,#4da82b,cciea_OC_UI_day,upwelling_index,lat,45N,,Bakun,,,,,
-Upwelling Index - Daily,Bakun Upwelling Index (39N),TRUE,#1f96a8,cciea_OC_UI_day,upwelling_index,lat,39N,,Bakun,,,,,
-Upwelling Index - Daily,Bakun Upwelling Index (33N),TRUE,#1e2ad4,cciea_OC_UI_day,upwelling_index,lat,33N,,Bakun,,,,,
-Habitat Compression,Habitat Compression Index 43.5-48 N,FALSE,#4da82b,cciea_OC_HCI,hci,region,Monthly Habitat Compression Index over 43.5-48N,,HCI,,cciea_current_dsets,,,
-Habitat Compression,Habitat Compression Index 40-43.5 N,FALSE,#1f96a8,cciea_OC_HCI,hci,region,Monthly Habitat Compression Index over 40-43.5N,,HCI,,cciea_current_dsets,,,
-Habitat Compression,Habitat Compression Index 35.5-40 N,TRUE,#1e2ad4,cciea_OC_HCI,hci,region,Monthly Habitat Compression Index over 35.5-40N,,HCI,,cciea_current_dsets,,,
-Habitat Compression,Habitat Compression Index 30-35.5 N,FALSE,#c2291b,cciea_OC_HCI,hci,region,Monthly Habitat Compression Index over 30-35.5N,,HCI,,cciea_current_dsets,,,
-Marine Heat Wave,Maximum Intensity,TRUE,#4da82b,cciea_OC_MHW,intensity,,,,Max Intensity or Cover,,mhw_current_dsets,,,
-Marine Heat Wave,Heatwave cover,TRUE,#1f96a8,cciea_OC_MHW,heatwave_cover,,,,,,mhw_current_dsets,,,
-Marine Heat Wave,Maximum Area,TRUE,#1e2ad4,cciea_OC_MHW,sum_area,,,yes,,Max Area,mhw_current_dsets,,,
+Group,title,viz,color,dset,name,query_parameter,query_value,right_axis,ylabel,subtitle
+Habitat Compression,Habitat Compression Index 43.5-48 N,FALSE,#4da82b,cciea_OC_HCI,hci,region,Monthly Habitat Compression Index over 43.5-48N,FALSE,HCI,Choose a single indicator to view  relative likelihood of compressed habitat heightening entanglement risk
+Habitat Compression,Habitat Compression Index 40-43.5 N,FALSE,#1f96a8,cciea_OC_HCI,hci,region,Monthly Habitat Compression Index over 40-43.5N,FALSE,,
+Habitat Compression,Habitat Compression Index 35.5-40 N,TRUE,#1e2ad4,cciea_OC_HCI,hci,region,Monthly Habitat Compression Index over 35.5-40N,FALSE,,
+Habitat Compression,Habitat Compression Index 30-35.5 N,FALSE,#c2291b,cciea_OC_HCI,hci,region,Monthly Habitat Compression Index over 30-35.5N,FALSE,,
+Oceanographic Indicators,Oceanic Nino Index,TRUE,#4da82b,cciea_OC_ONI,ONI,index,ONI,FALSE,,Choose a single indicator to view periods of the likelihood of strong upwelling conditions 
+Oceanographic Indicators,North Pacific High Jan - Feb Mean,TRUE,#1f96a8,cciea_OC_NPH_JF,nph_area,index,North Pacific High January - February Area,FALSE,,
+Oceanographic Indicators,Upwelling Index - CUTI 45N monthly,FALSE,#1e2ad4,cciea_OC_CUTI,cuti,lat,45N,FALSE,,
+Oceanographic Indicators,Upwelling Index - CUTI 39N monthly,TRUE,#c2291b,cciea_OC_CUTI,cuti,lat,39N,FALSE,,
+Oceanographic Indicators,Upwelling Index - CUTI 33N monthly,FALSE,#ed9f08,cciea_OC_CUTI,cuti,lat,33N,FALSE,,
+Whale Abundance,Population size - Humpback Whales,TRUE,#4da82b,cciea_MM_cetacean,abundance,common_name,humpback whale,FALSE,Population size,
+Whale Abundance,"Humpback whale relative abundance, central CA",TRUE,#1f96a8,cciea_MM_HB_REL,abundance,indicator,Relative humpback abundance,TRUE,Relative abundance,
+Entanglement Reports,Humpback Whale,TRUE,#4da82b,cciea_EI_WH_ENT,number_of_entanglements,species,Humpback Whale,FALSE,Number of Entanglements,
+Entanglement Reports,Gray Whale,TRUE,#1f96a8,cciea_EI_WH_ENT,number_of_entanglements,species,Gray Whale,FALSE,,
+Entanglement Reports,Blue Whale,TRUE,#1e2ad4,cciea_EI_WH_ENT,number_of_entanglements,species,Blue Whale,FALSE,,
+Entanglement Reports,Other/Unidentified Whale,TRUE,#c2291b,cciea_EI_WH_ENT,number_of_entanglements,species,Unidentified Other,FALSE,,
+Entanglement Reports,Total Whales,TRUE,#ed9f08,cciea_EI_WH_ENT,number_of_entanglements,species,Grand Total,FALSE,,
+Prey Abundance - Central CA,Krill,TRUE,#4da82b,cciea_EI_FBC,mean_cpue,species_group,Total Krill,FALSE,Mean CPUE,Choose a single indicator to view periods of the likelihood of increased coastal abundance of forage species. 
+Prey Abundance - Central CA,YOY anchovy,TRUE,#1f96a8,cciea_EI_FBC,mean_cpue,species_group,YOY Anchovy,FALSE,,
+Prey Abundance - Central CA,Adult anchovy,TRUE,#1e2ad4,cciea_EI_FBC,mean_cpue,species_group,Adult Anchovy,FALSE,,
+Fixed Gear Fishery - Landings,"Dungeness crab landings, US West Coast",TRUE,#4da82b,cciea_AC_landings,landings,indicator,Crab coastwide,FALSE,Landiings,
+Fixed Gear Fishery - Landings,California Dungeness crab landings,TRUE,#1f96a8,cciea_AC_landings,landings,indicator,Crab CA,FALSE,,
+Fixed Gear Fishery - Landings,Oregon Dungeness crab landings,TRUE,#1e2ad4,cciea_AC_landings,landings,indicator,Crab OR,FALSE,,
+Fixed Gear Fishery - Landings,Washington Dungeness crab landings,TRUE,#c2291b,cciea_AC_landings,landings,indicator,Crab WA,FALSE,,

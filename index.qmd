@@ -5,8 +5,49 @@ format:
     toc: false
     css: lib/dygraph/dygraph.min.css
     include-in-header:
-      text: |
-        <script src="lib/dygraph/dygraph.min.js"></script>
+      - text: |
+          <script src="lib/dygraph/dygraph.min.js"></script>
+          <!-- ISO8601 & Leaflet TimeDimension Bundle -->
+          <script src="https://cdn.jsdelivr.net/npm/iso8601-js-period@0.2.1/iso8601.min.js"></script>
+          <script src="https://cdn.jsdelivr.net/npm/leaflet-timedimension@1.1.1/dist/leaflet.timedimension.min.js"></script>
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-timedimension@1.1.1/dist/leaflet.timedimension.control.min.css" />
+
+          <!-- shpjs: Standalone Client-Side Zip Shapefile Parser -->
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+          <script src="https://cdn.jsdelivr.net/npm/shpjs@latest/dist/shp.min.js"></script>
+          
+          <style>
+            .legend {
+              background: white;
+              padding: 8px;
+              border-radius: 4px;
+              box-shadow: 0 0 15px rgba(0,0,0,0.2);
+              font-size: 12px;
+              line-height: 18px;
+            }
+            .leaflet-bar-timecontrol {
+              left: 50px;
+              top:-75px;
+              }
+            .info {
+              background: rgba(255, 255, 255, 0.92);
+              padding: 12px 14px;
+              border-radius: 6px;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+              font-size: 13px;
+              line-height: 1.4;
+              width: 220px;            /* Forces square card shape */
+              max-height: 250px;
+              overflow-y: auto;
+              margin-bottom: 120px !important; /* Lifts box up toward map midpoint */
+            }
+            .info.leaflet-control {
+              top: 50px;
+              }
+            .dotlegend {
+              font-weight: bold;
+            }
+            </style>
 ---
 
 ```{r}
@@ -19,7 +60,7 @@ library(dplyr)
 library(purrr)
 
 # 1. Read JSON file
-json_data <- jsonlite::fromJSON("data/items_dashboard.json", simplifyVector = FALSE)
+json_data <- jsonlite::fromJSON("data/items_whale.json", simplifyVector = FALSE)
 
 ojs_groups <- lapply(seq_along(json_data$items), function(i) {
   group <- json_data$items[[i]]
@@ -86,11 +127,12 @@ ojs_define(allGroups = ojs_groups)
 
 *Jump to:*
 
-* [Large Scale Oceanographic Indicators](index.qmd#grp0)
-* [Upwelling Index - Monthly](index.qmd#grp1)
-* [Upwelling Index - Daily](index.qmd#grp2)
-* [Habitat Compression](index.qmd#grp3)
-* [Marine Heat Wave](index.qmd#grp4)
+* [Habitat Compression](index.qmd#grp0)
+* [Oceanographic Indicators](index.qmd#grp1)
+* [Whale Abundance](index.qmd#grp2)
+* [Entanglement Reports](index.qmd#grp3)
+* [Prey Abundance - Central CA](index.qmd#grp4)
+* [Fixed Gear Fishery - Landings](index.qmd#grp5)
 
 ::::
 
@@ -256,6 +298,358 @@ for (group in json_data$items) {
    }
 }
 
+```
+
+## Whale Entanglement Maps
+
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+library(sf)
+library(leaflet)
+library(leaflet.extras)
+library(jsonlite)
+library(htmltools)
+
+# 1. Read Data
+geo_data <- st_read("data/items_map.json", quiet = TRUE)
+
+# Fix geometry/CRS if needed
+st_crs(geo_data) <- 4326
+
+# 2. Define Species Color Map
+species_colors <- c(
+  "Gray Whale"          = "#8f8f8f",
+  "Humpback Whale"      = "#4da82b",
+  "Blue Whale"           = "#1f96a8",
+  "Fin Whale"            = "#ff7800",
+  "Killer Whale"         = "#eeeeee",
+  "Minke Whale"          = "#ffff00",
+  "Sperm Whale"          = "#9933ff",
+  "Bryde's Whale"        = "#ff55a3",
+  "Unidentified Whale"   = "#c2291b"
+)
+
+# 3. Add Custom Properties for Leaflet Styling
+geo_data$fill_color <- species_colors[geo_data$Common_Name]
+geo_data$fill_color[is.na(geo_data$fill_color)] <- "#c2291b" # Default fallback
+
+# Border color based on Alive/Dead status
+geo_data$border_color <- ifelse(tolower(geo_data$Alive_Dead) == "dead", "#000000", "#ffffff")
+
+# 4. Generate HTML Popup Content
+geo_data$popup_html <- sprintf(
+  "<p><b>%s</b><br>
+  <b>Date:</b> %s<br>
+  <b>Case ID:</b> %s<br>
+  <b>Report County:</b> %s<br>
+  <b>State:</b> %s<br>
+  <b>Alive or Dead?:</b> %s<br>
+  <b>Entanglement Type:</b> %s<br>
+  <b>Entanglement Fishery:</b> %s<br>
+  <b>Entanglement Fishery Code:</b> %s<br>
+  <b>Entanglement Response:</b> %s<br>
+  <b>Entanglement Removed:</b> %s</p>",
+  htmlEscape(geo_data$Common_Name),
+  htmlEscape(geo_data$time),
+  htmlEscape(geo_data$CaseID),
+  htmlEscape(geo_data$Report_County),
+  htmlEscape(geo_data$State),
+  htmlEscape(geo_data$Alive_Dead),
+  htmlEscape(geo_data$Entanglement_Type),
+  htmlEscape(geo_data$Entanglement_Fishery),
+  htmlEscape(geo_data$Entanglement_Fishery_Code),
+  htmlEscape(geo_data$Entanglement_Response),
+  htmlEscape(geo_data$Entanglement_Removed)
+)
+
+# 5. Build Base Leaflet Map
+m <- leaflet(height = "800px") %>%
+  addProviderTiles(providers$USGS.USImagery, group = "USGS US Imagery") %>%
+  addTiles(group = "Open Street Map")
+
+# 6. Add Species Layers (Alive vs Dead Subgroups)
+species_list <- names(species_colors)
+
+for (sp in species_list) {
+  # Alive points
+  sp_alive <- geo_data[geo_data$Common_Name == sp & tolower(geo_data$Alive_Dead) != "dead", ]
+  if (nrow(sp_alive) > 0) {
+    m <- m %>% addCircleMarkers(
+      data = sp_alive,
+      radius = 8,
+      fillColor = ~fill_color,
+      color = ~border_color,
+      weight = 1,
+      opacity = 1,
+      fillOpacity = 0.8,
+      popup = ~popup_html,
+      group = paste(sp, "- Alive")
+    )
+  }
+  
+  # Dead points
+  sp_dead <- geo_data[geo_data$Common_Name == sp & tolower(geo_data$Alive_Dead) == "dead", ]
+  if (nrow(sp_dead) > 0) {
+    m <- m %>% addCircleMarkers(
+      data = sp_dead,
+      radius = 8,
+      fillColor = ~fill_color,
+      color = ~border_color,
+      weight = 1,
+      opacity = 1,
+      fillOpacity = 0.8,
+      popup = ~popup_html,
+      group = paste(sp, "- Dead")
+    )
+  }
+}
+
+# 7. Add Layers Control & Guaranteed Toggle Handler
+all_groups <- unlist(lapply(species_list, function(sp) c(paste(sp, "- Alive"), paste(sp, "- Dead"))))
+
+m <- m %>%
+  addLayersControl(
+    baseGroups = c("USGS US Imagery", "Open Street Map"),
+    overlayGroups = all_groups,
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  addLegend(
+    position = "topright",
+    colors = unname(species_colors),
+    labels = names(species_colors),
+    title = "Species Legend",
+    opacity = 0.8
+  ) %>%
+  htmlwidgets::onRender("
+    function(el, x) {
+      var map = this;
+      
+      // Use MutationObserver to wait until Leaflet injects the overlay control HTML
+      var observer = new MutationObserver(function(mutations, me) {
+        var container = el.querySelector('.leaflet-control-layers-overlays');
+        if (container) {
+          me.disconnect(); // Stop watching once found
+          
+          // Create master checkbox wrapper
+          var toggleLabel = document.createElement('label');
+          toggleLabel.style.fontWeight = 'bold';
+          toggleLabel.style.paddingBottom = '6px';
+          toggleLabel.style.marginBottom = '6px';
+          toggleLabel.style.borderBottom = '1px solid #ccc';
+          toggleLabel.style.display = 'block';
+          toggleLabel.innerHTML = '<div><input type=\"checkbox\" id=\"select-all-whales\" checked> Select / Deselect All</div>';
+          
+          container.insertBefore(toggleLabel, container.firstChild);
+          
+          // Wire event listener to check/uncheck all layer boxes
+          document.getElementById('select-all-whales').addEventListener('change', function(e) {
+            var checked = e.target.checked;
+            var checkboxes = container.querySelectorAll('input[type=\"checkbox\"]:not(#select-all-whales)');
+            checkboxes.forEach(function(cb) {
+              if (cb.checked !== checked) {
+                cb.click();
+              }
+            });
+          });
+        }
+      });
+      
+      observer.observe(el, { childList: true, subtree: true });
+    }
+  ")
+
+m
+
+```
+
+## Crab Fishery Maps
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+library(leaflet)
+library(htmltools)
+library(jsonlite)
+
+# 1. Read metadata from JSON file
+metadata <- fromJSON("data/items_crab_map.json")
+maptitle <- metadata$text
+shpfile_name <- metadata$shpfile
+
+# Color scale configuration matching original Polymer element
+colors_df <- data.frame(
+  name = c("> 560", "281 to 560", "141 to 280", "71 to 140", "36 to 70", "21 to 35", "< 21"),
+  color = c('#d52e26', '#ec7552', '#f7b57f', '#ffffbc', '#c0cbbd', '#849eb9', '#4575b4'),
+  stringsAsFactors = FALSE
+)
+
+# 2. Build Base Leaflet Map
+m <- leaflet(height = "800px") %>%
+  setView(lng = -123, lat = 42, zoom = 6) %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Esri World Imagery") %>%
+  addProviderTiles(providers$Esri.OceanBasemap, group = "Esri Ocean Basemap") %>%
+  addProviderTiles(providers$Esri.WorldTopoMap, group = "Esri World TopoMap") %>%
+  addLayersControl(
+    baseGroups = c("Esri World Imagery", "Esri Ocean Basemap", "Esri World TopoMap"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+
+# 3. Inject Client-Side shpjs + TimeDimension Logic
+m <- m %>% htmlwidgets::onRender(
+  sprintf("
+  function(el, x) {
+    var map = this;
+    var mapTitle = %s;
+    var shpFileName = %s;
+    var colorRanges = %s;
+
+    var shpfileUrl = 'crab_layers/' + shpFileName;
+
+    function getColor(d) {
+      return d > 560 ? colorRanges[0].color :
+             d > 280 ? colorRanges[1].color :
+             d > 140 ? colorRanges[2].color :
+             d > 70  ? colorRanges[3].color :
+             d > 35  ? colorRanges[4].color :
+             d > 20  ? colorRanges[5].color :
+             d > 0   ? colorRanges[6].color :
+                       '#ffffff00';
+    }
+
+    // Custom TimeDimension Control (Mirrors Polymer attached() logic)
+    var TimeDimensionCustom = L.Control.TimeDimension.extend({
+      _getDisplayDateFormat: function(date) {
+        var m = date.getMonth();
+        var y = date.getFullYear().toString();
+        var y2 = (parseInt(y) + 1).toString();
+        var y3 = y.substr(2) + y2.substr(2);
+        var mon = '', montext = '';
+
+        switch (m) {
+          case 11:
+            mon = 'NF';
+            montext = 'Nov ' + y + ' to Feb ' + y2;
+            break;
+          case 3:
+            mon = 'MJ';
+            montext = 'Mar ' + y + ' to Jun ' + y;
+            break;
+          case 7:
+            mon = 'JO';
+            montext = 'Jul ' + y + ' to Oct ' + y;
+            break;
+        }
+
+        this.selectedtime = 'DUN_' + mon + (mon === 'NF' ? y3 : y);
+        this.selectedtimetext = montext;
+
+        if (this.layer) {
+          var selTime = this.selectedtime;
+          this.layer.setStyle(function(feature) {
+            var val = feature.properties[selTime];
+            var c = getColor(val);
+            return {
+              fillColor: c,
+              weight: 1,
+              color: c,
+              fillOpacity: 0.7
+            };
+          });
+        }
+
+        if (this.infoDiv) {
+          this.infoDiv.innerHTML = mapTitle + ' from <b>' + this.selectedtimetext + '</b>';
+        }
+
+        return y + '-' + mon;
+      }
+    });
+
+    // Initialize TimeDimension
+    var timeDimension = new L.TimeDimension({
+      period: 'P4M',
+      timeInterval: '2011-01-01T00:00:00Z/2016-09-01T00:00:00Z'
+    });
+    map.timeDimension = timeDimension;
+
+    var timeDimensionControl = new TimeDimensionCustom({
+      timeSliderDragUpdate: true,
+      loopButton: true,
+      position: 'topleft',
+      title: 'Year',
+      playerOptions: { transitionTime: 1000, loop: true },
+      displayDate: true,
+      autoPlay: false,
+      minSpeed: 1, maxSpeed: 5, speedStep: 1
+    });
+    map.addControl(timeDimensionControl);
+
+    // Info Control Box
+    var info = L.control({ position: 'topright' });
+    info.onAdd = function() {
+      var div = L.DomUtil.create('div', 'info');
+      timeDimensionControl.infoDiv = div;
+      div.innerHTML = mapTitle + ' from <b>Nov 2010 to Feb 2011</b>';
+      return div;
+    };
+    info.addTo(map);
+
+    // Legend Box
+    var legend = L.control({ position: 'topright' });
+    legend.onAdd = function() {
+      var div = L.DomUtil.create('div', 'legend');
+      div.innerHTML = '<center><span class=\"dotlegend\">VMS pts</span></center><br>';
+      for (var i = 0; i < colorRanges.length; i++) {
+        var idx = colorRanges.length - 1 - i;
+        div.innerHTML += '<div style=\"width:95%%;padding-left:3px;background-color:' + colorRanges[idx].color + '\">' + colorRanges[idx].name + '</div>';
+      }
+      return div;
+    };
+    legend.addTo(map);
+
+    // Fetch and parse the zipped shapefile client-side using shpjs
+    shp(shpfileUrl).then(function(geojson) {
+      var geojsonLayer = L.geoJson(geojson, {
+        onEachFeature: function(feature, layer) {
+          if (feature.properties) {
+            var popupContent = Object.keys(feature.properties).map(function(k) {
+              var k1 = k.indexOf('DUN_') === 0 ? k.substr(4) : k;
+              return k1 + ': ' + feature.properties[k];
+            }).join('<br />');
+            layer.bindPopup(popupContent, { maxHeight: 200 });
+          }
+        },
+        style: function(feature) {
+          var c = getColor(feature.properties['DUN_NF1011']);
+          return {
+            fillColor: c,
+            weight: 1,
+            color: c,
+            fillOpacity: 0.7
+          };
+        }
+      });
+
+      geojsonLayer.addTo(map);
+      timeDimensionControl.layer = geojsonLayer;
+    }).catch(function(err) {
+      console.error('Error parsing shapefile zip:', err);
+    });
+  }
+  ",
+  toJSON(maptitle, auto_unbox = TRUE),
+  toJSON(shpfile_name, auto_unbox = TRUE),
+  toJSON(colors_df, auto_unbox = TRUE)
+  )
+)
+
+m
 ```
 
 

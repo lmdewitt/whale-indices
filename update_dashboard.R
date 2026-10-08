@@ -235,4 +235,4 @@ grouplist <- list(
   items = groupitems
 )
 
-write(toJSON(grouplist, auto_unbox = TRUE, pretty = TRUE, null = "null"), file = "data/items_dashboard.json")
+write(toJSON(grouplist, auto_unbox = TRUE, pretty = TRUE, null = "null"), file = "data/items_whale.json")
