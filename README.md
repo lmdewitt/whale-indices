@@ -1,25 +1,27 @@
-# CCIEA Indicator Dashboard
+# CCIEA Whale Entanglement Dashboard
 
 
-- [California Current Integrated Ecosystem Assessment (CCIEA) Indicator
+- [California Current Integrated Ecosystem Assessment (CCIEA) Whale Entanglement
   Dashboard](#california-current-integrated-ecosystem-assessment-cciea-indicator-dashboard)
   - [Code](#code)
   - [CCIEA Resources](#cciea-resources)
 
 <hr>
 
-## California Current Integrated Ecosystem Assessment (CCIEA) Indicator Dashboard
+## California Current Integrated Ecosystem Assessment (CCIEA) Whale Entanglement Dashboard and Maps
 
-The CCIEA Indicator Dashboard is an on-line resource for viewing and
-downloading the most recent CCIEA indicator data.
+The CCIEA Whale Entanglement Dashboard is an on-line resource for viewing and
+downloading the most recent CCIEA whale entanglement indicators and data.
 
 The dashboard provides:
 
-- Daily updates of indicator data as available
+- Monthly updates of indicator data as available
 - Interactive time series plots
 - Metadata for each indicator
 - Links for downloading indicator time series as csv files
 - Links to ERDDAP™ for custom downloads
+- Whale Entanglement Maps
+- Crab Fishery Maps
 
 ### Code
 

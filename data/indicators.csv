@@ -8,7 +8,6 @@ Oceanographic Indicators,North Pacific High Jan - Feb Mean,TRUE,#1f96a8,cciea_OC
 Oceanographic Indicators,Upwelling Index - CUTI 45N monthly,FALSE,#1e2ad4,cciea_OC_CUTI,cuti,lat,45N,FALSE,,
 Oceanographic Indicators,Upwelling Index - CUTI 39N monthly,TRUE,#c2291b,cciea_OC_CUTI,cuti,lat,39N,FALSE,,
 Oceanographic Indicators,Upwelling Index - CUTI 33N monthly,FALSE,#ed9f08,cciea_OC_CUTI,cuti,lat,33N,FALSE,,
-Whale Abundance,Population size - Humpback Whales,TRUE,#4da82b,cciea_MM_cetacean,abundance,common_name,humpback whale,FALSE,Population size,
 Whale Abundance,"Humpback whale relative abundance, central CA",TRUE,#1f96a8,cciea_MM_HB_REL,abundance,indicator,Relative humpback abundance,TRUE,Relative abundance,
 Entanglement Reports,Humpback Whale,TRUE,#4da82b,cciea_EI_WH_ENT,number_of_entanglements,species,Humpback Whale,FALSE,Number of Entanglements,
 Entanglement Reports,Gray Whale,TRUE,#1f96a8,cciea_EI_WH_ENT,number_of_entanglements,species,Gray Whale,FALSE,,
