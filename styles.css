@@ -54,17 +54,63 @@
   color: #333333;           /* Change label text color */
   font-weight: 600;        /* Make labels bold */
   background-color: #eeeeee;  /* Change tab background */
-}
+ border-color: #cccccc;}
 
 /* Style the active or selected tab */
 .panel-tabset .nav-link.active {
   font-weight: 600;
   color:#ffffff;           /* Active text color */
   background-color:#0097d6;/* Active background color */
+   border-color: #cccccc;
 }
 
 
 a {
   color: #0097d6;
   text-decoration: none;
+}
+
+.btn-primary {
+  /* Reset default browser styles */
+  border: none;
+  background: none;
+  font-family: inherit;
+  
+  /* Layout & Sizing */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6em 1.5em; /* Scalable padding based on font size */
+  min-height: 44px;     /* Mobile-friendly accessible tap target size */
+  
+  /* Visual Styling */
+  background-color:#0097d6;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;   /* Smooth rounded corners */
+  box-shadow: 0 4px 6px -1px rgba(62, 104, 255, 0.2);
+  
+  /* UX Polish */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out; /* Smooth transition animation */
+}
+
+/* Hover State (Mouse over) */
+.btn-primary:hover {
+  background-color: #0097d6; /* Darker shade of the base color */
+  transform: translateY(-1px); /* Slight lift effect */
+  box-shadow: 0 6px 12px -2px rgba(62, 104, 255, 0.3);
+}
+
+/* Active State (When clicked) */
+.btn-primary:active {
+  background-color: #0097d6;
+  transform: translateY(1px); /* Pressed effect */
+}
+
+/* Focus State (Keyboard Navigation Accessibility) */
+.btn-primary:focus-visible {
+  outline: 3px solid #0097d6;
+  outline-offset: 2px;
 }

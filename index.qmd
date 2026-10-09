@@ -18,36 +18,60 @@ format:
           
           <style>
             .legend {
-              background: white;
-              padding: 8px;
+              background: rgba(255,255,255,0.55); !important;
+              background-color:  rgba(255,255,255,0.55); !important;
+              padding: 4px;
               border-radius: 4px;
-              box-shadow: 0 0 15px rgba(0,0,0,0.2);
+              vorder:none;
               font-size: 12px;
               line-height: 18px;
+              border: none;
             }
-            .leaflet-bar-timecontrol {
+            .custom-species-legend {
+              background: rgba(255, 255, 255, 0.05) !important;
+              border: none !important;
+              box-shadow: none !important;
+              padding: 8px 10px !important;
+              border-radius: 6px !important;
+              font-size: 12px !important;
+              line-height: 18px !important;
+              }
+              .leaflet-bar-timecontrol {
               left: 50px;
               top:-75px;
               }
             .info {
-              background: rgba(255, 255, 255, 0.92);
+              background: rgba(255, 255, 255, 0.55);
               padding: 12px 14px;
               border-radius: 6px;
-              box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+              /*box-shadow: 0 2px 10px rgba(0,0,0,0.25);*/
               font-size: 13px;
               line-height: 1.4;
-              width: 220px;            /* Forces square card shape */
-              max-height: 250px;
+              max-width: 220px;          /* Forces square card shape */
+             /* max-height: 250px;*/
               overflow-y: auto;
-              margin-bottom: 120px !important; /* Lifts box up toward map midpoint */
+              margin-bottom: 80px !important; /* Lifts box up toward map midpoint */
             }
             .info.leaflet-control {
-              top: 50px;
+              top: 10px;
+              }
+            .leaflet-top.leaflet-right .leaflet-control-layers{
+              top:60px;
               }
             .dotlegend {
               font-weight: bold;
             }
-            </style>
+          .dygraph-annotation,
+            .dygraph-annotation * {
+                text-align: center !important;
+                font-weight: bold !important;
+                cursor: pointer !important;
+                pointer-events: auto !important;
+              }
+          dialog::backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+          }
+              </style>
 ---
 
 ```{r}
@@ -61,7 +85,7 @@ library(purrr)
 
 # 1. Read JSON file
 json_data <- jsonlite::fromJSON("data/items_whale.json", simplifyVector = FALSE)
-
+all_annotations <- if (!is.null(json_data$annotations)) json_data$annotations else list()
 ojs_groups <- lapply(seq_along(json_data$items), function(i) {
   group <- json_data$items[[i]]
   raw_data <- group$data
@@ -78,6 +102,25 @@ ojs_groups <- lapply(seq_along(json_data$items), function(i) {
   
   plot_labels <- if (!is.null(group$options$labels)) group$options$labels[-1] else group$titles
   checkbox_titles <- if (!is.null(group$titles)) group$titles else plot_labels
+  
+  # Filter annotations for this specific group (0-indexed match)
+  group_ann <- keep(all_annotations, ~ .x$group == (i - 1))
+  
+  # Map into Dygraphs annotation object format
+  formatted_ann <- lapply(group_ann, function(a) {
+   # Convert date string to milliseconds for Dygraphs
+    x_ms <- as.numeric(as.POSIXct(a$date, tz = "UTC")) * 1000
+    list(
+      x = x_ms,
+      series = a$series,
+      shortText = ifelse(!is.null(a$icon), "", "A"), # Letter/icon text
+      text = a$annotation,
+      icon = a$icon,
+      width = 50,
+      height = 25,
+      cssClass = "dygraph-annotation"
+    )
+  })
   
   # Extract axis mapping configuration from options$series
   series_opts <- list()
@@ -112,10 +155,12 @@ ojs_groups <- lapply(seq_along(json_data$items), function(i) {
     datewindow = group$options$dateWindow,
     xrangepad = group$options$xRangePad,
     yrangepad = group$options$yRangePad,
-    rightgap = group$options$rightGap
-  )
+    rightgap = group$options$rightGap,
+    annotations = formatted_ann,
+    stats = group$stats
+)
 })
-# 3. Export all groups to OJS
+# Export all groups to OJS
 ojs_define(allGroups = ojs_groups)
 ```
 
@@ -136,6 +181,7 @@ ojs_define(allGroups = ojs_groups)
 
 ::::
 
+![](images/blue-whale_50.png) Whale icon represents key events and environmental conditions during 2016 (click on each whale for info)
 
 ```{ojs}
 //| echo: false
@@ -143,28 +189,85 @@ ojs_define(allGroups = ojs_groups)
 // Load local Dygraphs library
 Dygraph = require(await FileAttachment("lib/dygraph/dygraph.min.js").url())
 
+function showAnnotationModal(ann) {
+  const existing = document.getElementById("dygraph-annotation-modal");
+  if (existing) existing.remove();
+
+  const backdrop = document.createElement("div");
+  backdrop.id = "dygraph-annotation-backdrop";
+  backdrop.style.position = "fixed";
+  backdrop.style.top = "0";
+  backdrop.style.left = "0";
+  backdrop.style.width = "100vw";
+  backdrop.style.height = "100vh";
+  backdrop.style.backgroundColor = "rgba(0,0,0,0.4)";
+  backdrop.style.zIndex = "9999";
+
+  const modal = document.createElement("div");
+  modal.id = "dygraph-annotation-modal";
+  modal.style.position = "fixed";
+  modal.style.top = "50%";
+  modal.style.left = "50%";
+  modal.style.transform = "translate(-50%, -50%)";
+  modal.style.backgroundColor = "#ffffff";
+  modal.style.padding = "20px";
+  modal.style.borderRadius = "8px";
+  modal.style.boxShadow = "0 4px 20px rgba(0,0,0,0.3)";
+  modal.style.zIndex = "10000";
+  modal.style.maxWidth = "450px";
+  modal.style.width = "90%";
+  modal.style.fontFamily = "Arial, sans-serif";
+
+  modal.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">
+      <strong style="font-size: 16px; color: #333;">${ann.series || 'Annotation'}</strong>
+      <button id="close-ann-modal" style="background: none; border: none; font-size: 22px; cursor: pointer; color: #888;">&times;</button>
+    </div>
+    <div style="font-size: 14px; line-height: 1.5; color: #444;">
+      ${ann.text}
+    </div>
+  `;
+
+  const closeModal = () => {
+    modal.remove();
+    backdrop.remove();
+  };
+
+  backdrop.addEventListener("click", closeModal);
+  document.body.appendChild(backdrop);
+  document.body.appendChild(modal);
+
+  document.getElementById("close-ann-modal").addEventListener("click", closeModal);
+}
+
 html`${allGroups.map((group, groupIdx) => {
+// the following 5 lines solve the problem of filtering and mapping when there is only one time series in a group
+  const titles = Array.isArray(group.titles) ? group.titles : [group.titles];
+  const visibility = Array.isArray(group.visibility) ? group.visibility : [group.visibility];
+  const colors = Array.isArray(group.colors) ? group.colors : [group.colors];
+  const timestamps = Array.isArray(group.timestamps) ? group.timestamps : [group.timestamps];
+  const labels = [].concat(group.labels);
   
   const checkboxInputs = Inputs.checkbox(
-    group.titles, 
+    titles, 
     { 
-      value: group.titles.filter((_, i) => group.visibility[i])
+      value: titles.filter((_, i) => visibility[i])
     }
   );
   
   const indinfo = Inputs.checkbox(
-    group.titles, 
+    titles, 
     { 
-      value: group.titles.filter((_, i) => group.visibility[i])
+      value: titles.filter((_, i) => visibility[i])
     }
   );
   
-  const legdivht = 50 + (group.titles.length*30);
+  const legdivht = 50 + (titles.length*30);
   
   
   // Generate dynamic CSS rules to style each checkbox label & input by color
   const dynamicStyles = html`<style>
-    ${group.colors.map((color, idx) => `
+    ${colors.map((color, idx) => `
       /* Scope styles specifically to this group index */
       .group-cb-${groupIdx} label:nth-child(${idx + 1}) {
         color: ${color} !important;
@@ -186,30 +289,77 @@ html`${allGroups.map((group, groupIdx) => {
   chartContainer.style.marginTop = "10px";
   chartContainer.style.marginBottom = "40px";
 
-  const chartData = group.timestamps.map((t, rowIdx) => {
+  const chartData = timestamps.map((t, rowIdx) => {
     const row = [new Date(t)];
-    for (let colIdx = 0; colIdx < group.labels.length; colIdx++) {
+    for (let colIdx = 0; colIdx < labels.length; colIdx++) {
       row.push(group.values[rowIdx][colIdx]);
     }
     return row;
   });
-
+  
+  let checkedCount = checkboxInputs.value.length;
+  
   checkboxInputs.addEventListener("input", () => {
     const selectedTitles = checkboxInputs.value;
-    const currentVisibility = group.titles.map(title => selectedTitles.includes(title));
-  
+    const currentVisibility = titles.map(title => selectedTitles.includes(title));
+    checkedCount = selectedTitles.length;
+    
     if (chartContainer._dygraphInstance) {
       chartContainer._dygraphInstance.updateOptions({ visibility: currentVisibility });
     }
   });
 
   requestAnimationFrame(() => {
-    const initialVisibility = group.titles.map(title => checkboxInputs.value.includes(title));
-    
-    chartContainer._dygraphInstance = new Dygraph(chartContainer, chartData, {
-      labels: ["Time", ...group.labels],
-      colors: group.colors,
+    const initialVisibility = titles.map(title => checkboxInputs.value.includes(title));
+
+    // Define underlay shading for Habitat Compression (Group 0)
+    let underlayFn = null;
+    if (groupIdx === 0 && group.stats) {
+      underlayFn = function(canvas, area, g) {
+// ONLY draw shading if EXACTLY ONE checkbox is selected
+        if (checkedCount !== 1) return;
+
+        const selectedTitles = checkboxInputs.value;
+        const visibleIdx = titles.findIndex(t => selectedTitles.includes(t));
+        
+        const stats = (visibleIdx !== -1 && group.stats[visibleIdx]) ? group.stats[visibleIdx] : group.stats[2]; 
+        if (!stats) return;
+
+        const y0 = g.toDomYCoord(stats[3]);                 // Max
+        const y1 = g.toDomYCoord(stats[0] + stats[1]);       // +1 SD
+        const y2 = g.toDomYCoord(stats[0]);                 // Mean
+        
+        // Ensure y3 hits Y = 0 or the bottom of the canvas plot area (area.y + area.h)
+        const y0Dom = g.toDomYCoord(0);
+        const y3 = (y0Dom !== null && !isNaN(y0Dom)) ? Math.min(y0Dom, area.y + area.h) : area.y + area.h; 
+
+        // Calculate positive heights
+        const y0height = Math.max(0, y1 - y0);
+        const y1height = Math.max(0, y2 - y1);
+        const y2height = Math.max(0, y3 - y2); // Fills from Mean down to Y=0 / bottom
+
+        // Draw low (green), medium (yellow), and high (red) compression bands
+        canvas.fillStyle = "rgba(0, 255, 0, 0.12)";
+        canvas.fillRect(area.x, y0, area.w, y0height);
+
+        canvas.fillStyle = "rgba(255, 255, 0, 0.12)";
+        canvas.fillRect(area.x, y1, area.w, y1height);
+
+        canvas.fillStyle = "rgba(255, 0, 0, 0.12)";
+        canvas.fillRect(area.x, y2, area.w, y2height);
+
+        // Text Labels
+        canvas.font = "14px Arial";
+        canvas.fillStyle = "rgba(100, 100, 100, 0.85)";
+        canvas.fillText("low", area.x + area.w - 60, y0 + (y0height / 2) + 5);
+        canvas.fillText("medium", area.x + area.w - 60, y1 + (y1height / 2) + 5);
+        canvas.fillText("high", area.x + area.w - 60, y2 + (y2height / 2) + 5);      };
+    }
+    const dyInstance = new Dygraph(chartContainer, chartData, {
+      labels: ["Time", ...labels],
+      colors: colors,
       visibility: initialVisibility,
+      underlayCallback: underlayFn, // Applies underlay shading if defined
       ylabel: group.ylabel || "",
       y2label: group.y2label || "",
       series: group.series || {},  // Assigns specified series to 'y2' axis
@@ -227,6 +377,53 @@ html`${allGroups.map((group, groupIdx) => {
       rightGap: group.rightgap
     });
 
+// Attach annotations if present for this group
+  if (group.annotations && group.annotations.length > 0) {
+    dyInstance.ready(() => {
+      const validSeries = labels;
+      
+      const readyAnnotations = group.annotations.map((ann, idx) => {
+        const matchedSeries = validSeries.includes(ann.series) ? ann.series : validSeries[0];
+        
+        return {
+          x: ann.x,
+          series: matchedSeries,
+          shortText: ann.shortText || "A",
+          text: ann.text,
+          icon: ann.icon,
+          width: ann.width || 20,
+          height: ann.height || 20,
+          cssClass: "dygraph-annotation",
+          annotationId: idx // Unique reference ID
+        };
+      });
+
+      dyInstance.setAnnotations(readyAnnotations);
+      
+      // Store reference on instance
+      dyInstance._annotationList = readyAnnotations;
+    });
+
+    // Delegated click handler on the chart DOM container
+    chartContainer.addEventListener("click", (e) => {
+      const annEl = e.target.closest(".dygraph-annotation");
+      if (annEl && dyInstance._annotationList) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        // Find matching annotation object from dyInstance._annotationList
+        const annTitle = annEl.getAttribute("title");
+        const matchedAnn = dyInstance._annotationList.find(a => a.text === annTitle) || dyInstance._annotationList[0];
+        
+        if (matchedAnn) {
+          showAnnotationModal(matchedAnn);
+        }
+      }
+    });
+  }
+
+    chartContainer._dygraphInstance = dyInstance;
+    
     setTimeout(() => {
       chartContainer._dygraphInstance.resize();
     }, 50);
@@ -302,6 +499,18 @@ for (group in json_data$items) {
 
 ## Whale Entanglement Maps
 
+<h3>NMFS WCR Whale Entanglement Data 1982-2025</h3>
+
+<div style="display: flex; gap: 30px; margin: 15px 0;">
+[Dataset Information](https://www.fisheries.noaa.gov/resource/document/large-whale-entanglements-us-west-coast-1982-2017)
+[Download](https://oceanview.pfeg.noaa.gov/erddap/tabledap/WCRWhaleEntanglements.html)
+</div>
+
+Filter Data By:
+
+::: {#dashboard-maps .panel-tabset .ojs-track-layout}
+
+### Species (alive/dead)
 
 ```{r}
 #| echo: false
@@ -314,13 +523,13 @@ library(leaflet.extras)
 library(jsonlite)
 library(htmltools)
 
-# 1. Read Data
+# Read Data
 geo_data <- st_read("data/items_map.json", quiet = TRUE)
 
 # Fix geometry/CRS if needed
 st_crs(geo_data) <- 4326
 
-# 2. Define Species Color Map
+# Define Species Color Map
 species_colors <- c(
   "Gray Whale"          = "#8f8f8f",
   "Humpback Whale"      = "#4da82b",
@@ -333,14 +542,47 @@ species_colors <- c(
   "Unidentified Whale"   = "#c2291b"
 )
 
-# 3. Add Custom Properties for Leaflet Styling
+add_custom_legend <- function(map) {
+  legend_html <- HTML('
+    <div class="custom-species-legend">
+      <div style="font-weight: bold; margin-bottom: 3px; text-align: center;">Legend</div>
+      
+      <!-- Status circles on the same line -->
+      <div style="display: flex; gap: 15px; justify-content: center; align-items: center; margin-bottom: 3px;">
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <span style="display: inline-block; width: 14px; height: 14px; border: 2px solid #ffffff; border-radius: 50%;"></span>
+          <span>Alive</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <span style="display: inline-block; width: 14px; height: 14px; border: 2px solid #000000; border-radius: 50%;"></span>
+          <span>Dead</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 3px;">
+        <div style="display: flex; align-items: center; gap: 8px;"><span style="display: inline-block; width: 12px; height: 12px; background-color: #8f8f8f; border-radius: 50%;"></span> Gray Whale</div>
+        <div style="display: flex; align-items: center; gap: 8px;"><span style="display: inline-block; width: 12px; height: 12px; background-color: #4da82b; border-radius: 50%;"></span> Humpback Whale</div>
+        <div style="display: flex; align-items: center; gap: 8px;"><span style="display: inline-block; width: 12px; height: 12px; background-color: #1f96a8; border-radius: 50%;"></span> Blue Whale</div>
+        <div style="display: flex; align-items: center; gap: 8px;"><span style="display: inline-block; width: 12px; height: 12px; background-color: #ff7800; border-radius: 50%;"></span> Fin Whale</div>
+        <div style="display: flex; align-items: center; gap: 8px;"><span style="display: inline-block; width: 12px; height: 12px; background-color: #eeeeee; border-radius: 50%;"></span> Killer Whale</div>
+        <div style="display: flex; align-items: center; gap: 8px;"><span style="display: inline-block; width: 12px; height: 12px; background-color: #ffff00; border-radius: 50%;"></span> Minke Whale</div>
+        <div style="display: flex; align-items: center; gap: 8px;"><span style="display: inline-block; width: 12px; height: 12px; background-color: #9933ff; border-radius: 50%;"></span> Sperm Whale</div>
+        <div style="display: flex; align-items: center; gap: 8px;"><span style="display: inline-block; width: 12px; height: 12px; background-color: #ff55a3; border-radius: 50%;"></span> Bryde\'s Whale</div>
+        <div style="display: flex; align-items: center; gap: 8px;"><span style="display: inline-block; width: 12px; height: 12px; background-color: #c2291b; border-radius: 50%;"></span> Unidentified Whale</div>
+      </div>
+    </div>
+  ')
+
+  map %>% addControl(html = legend_html, position = "bottomleft")
+}
+
+# Add Custom Properties for Leaflet Styling
 geo_data$fill_color <- species_colors[geo_data$Common_Name]
 geo_data$fill_color[is.na(geo_data$fill_color)] <- "#c2291b" # Default fallback
 
 # Border color based on Alive/Dead status
 geo_data$border_color <- ifelse(tolower(geo_data$Alive_Dead) == "dead", "#000000", "#ffffff")
 
-# 4. Generate HTML Popup Content
+# Generate HTML Popup Content
 geo_data$popup_html <- sprintf(
   "<p><b>%s</b><br>
   <b>Date:</b> %s<br>
@@ -366,12 +608,12 @@ geo_data$popup_html <- sprintf(
   htmlEscape(geo_data$Entanglement_Removed)
 )
 
-# 5. Build Base Leaflet Map
-m <- leaflet(height = "800px") %>%
+# Build Base Leaflet Map
+m <- leaflet(height = "800px",width="800px") %>%
   addProviderTiles(providers$USGS.USImagery, group = "USGS US Imagery") %>%
   addTiles(group = "Open Street Map")
 
-# 6. Add Species Layers (Alive vs Dead Subgroups)
+# Add Species Layers (Alive vs Dead Subgroups)
 species_list <- names(species_colors)
 
 for (sp in species_list) {
@@ -408,7 +650,7 @@ for (sp in species_list) {
   }
 }
 
-# 7. Add Layers Control & Guaranteed Toggle Handler
+# Add Layers Control & Guaranteed Toggle Handler
 all_groups <- unlist(lapply(species_list, function(sp) c(paste(sp, "- Alive"), paste(sp, "- Dead"))))
 
 m <- m %>%
@@ -417,13 +659,7 @@ m <- m %>%
     overlayGroups = all_groups,
     options = layersControlOptions(collapsed = FALSE)
   ) %>%
-  addLegend(
-    position = "topright",
-    colors = unname(species_colors),
-    labels = names(species_colors),
-    title = "Species Legend",
-    opacity = 0.8
-  ) %>%
+  add_custom_legend() %>%
   htmlwidgets::onRender("
     function(el, x) {
       var map = this;
@@ -466,7 +702,221 @@ m
 
 ```
 
+### Fishery
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+gear_categories <- list(
+  list(code = "Cr", title = "Canadian recreational", items = c("crab", "prawn")),
+  list(code = "Cs", title = "Coonstripe shrimp", items = c("Coonstripe shrimp")),
+  list(code = "Dc", title = "Unknown Dungeness crab", items = c("Unknown Dungeness crab")),
+  list(code = "Dcc", title = "Dungeness crab commercial", items = c("Dungeness crab commercial, WA", "Dungeness crab commercial, WA and other gear", "Dungeness crab commercial, tribal WA", "Dungeness crab commercial, WA and tribal", "Dungeness crab commercial, OR", "Dungeness crab commercial, CA/OR", "Dungeness crab commercial, CA", "Dungeness crab commercial, state unknown", "Dungeness crab, tribal")),
+  list(code = "DccRc", title = "Dungeness crab and rock crab", items = c("Dungeness crab, unknown, and rock crab commercial, CA")),
+  list(code = "Dcr", title = "Dungeness crab recreational", items = c("WA", "CA")),
+  list(code = "DGN", title = "Drift gillnet", items = c("CA", "state unknown")),
+  list(code = "Ebc", title = "Experimental Commercial Box crab, CA", items = c("Experimental Commercial Box crab, CA")),
+  list(code = "Gn", title = "Gillnet", items = c("Gillnet", "Gillnet tribal, WA")),
+  list(code = "Gn/Rc", title = "Gillnet and rock crab", items = c("Gillnet and rock crab")),
+  list(code = "Gt", title = "Groundfish trawl", items = c("Groundfish trawl")),
+  list(code = "Sb/Hll", title = "Halibut longline + Sablefish pot", items = c("Halibut longline + Sablefish pot")),
+  list(code = "Hl", title = "Hook and Line", items = c("Hook and Line", "Recreational hook and line")),
+  list(code = "Kk", title = "King Crab", items = c("Commercial, AK")),
+  list(code = "Lb", title = "Lobster", items = c("Commercial, CA", "Spiny, CA")),
+  list(code = "Mono", title = "Monofilament", items = c("Monofilament", "Monofilament line")),
+  list(code = "Nt", title = "Netting", items = c("Net", "Netting")),
+  list(code = "Ot", title = "Other", items = c("(e.g., cables, weather buoys)")),
+  list(code = "Rc", title = "Rock crab", items = c("CA", "Rock crab")),
+  list(code = "Sb", title = "Sablefish pot", items = c("Commercial, OR", "CA and Coonstripe shrimp", "state unknown", "Sablefish pot")),
+  list(code = "Sp", title = "Spot prawn commercial", items = c("CA")),
+  list(code = "Spr", title = "Spot prawn recreational", items = c("CA")),
+  list(code = "St", title = "Salmon troll commercial", items = c("WA", "CA")),
+  list(code = "Un", title = "Unidentified", items = c("Unidentified"))
+)
+
+m_gear <- leaflet(height = "800px", width = "800px") %>%
+  addProviderTiles(providers$USGS.USImagery, group = "USGS US Imagery") %>%
+  addTiles(group = "Open Street Map")
+
+gear_overlay_groups <- c()
+
+for (cat in gear_categories) {
+  match_code <- geo_data$Entanglement_Fishery_Code == cat$code
+  match_item <- geo_data$Entanglement_Fishery %in% cat$items
+  
+  sub_data <- geo_data[match_code | match_item, ]
+  
+  if (nrow(sub_data) > 0) {
+    grp_label <- cat$title
+    gear_overlay_groups <- c(gear_overlay_groups, grp_label)
+    
+    m_gear <- m_gear %>% addCircleMarkers(
+      data = sub_data,
+      radius = 8,
+      fillColor = ~fill_color,
+      color = ~border_color,
+      weight = 1,
+      opacity = 1,
+      fillOpacity = 0.8,
+      popup = ~popup_html,
+      group = grp_label
+    )
+  }
+}
+
+m_gear <- m_gear %>%
+  addLayersControl(
+    baseGroups = c("USGS US Imagery", "Open Street Map"),
+    overlayGroups = gear_overlay_groups,
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  add_custom_legend() %>%
+  htmlwidgets::onRender("
+    function(el, x) {
+      var map = this;
+      
+      var observer = new MutationObserver(function(mutations, me) {
+        var container = el.querySelector('.leaflet-control-layers-overlays');
+        if (container) {
+          me.disconnect();
+          
+          var toggleLabel = document.createElement('label');
+          toggleLabel.style.fontWeight = 'bold';
+          toggleLabel.style.paddingBottom = '6px';
+          toggleLabel.style.marginBottom = '6px';
+          toggleLabel.style.borderBottom = '1px solid #ccc';
+          toggleLabel.style.display = 'block';
+          toggleLabel.innerHTML = '<div><input type=\"checkbox\" id=\"select-all-fisheries\" checked> Select / Deselect All</div>';
+          
+          container.insertBefore(toggleLabel, container.firstChild);
+          
+          document.getElementById('select-all-fisheries').addEventListener('change', function(e) {
+            var checked = e.target.checked;
+            var checkboxes = container.querySelectorAll('input[type=\"checkbox\"]:not(#select-all-fisheries)');
+            checkboxes.forEach(function(cb) {
+              if (cb.checked !== checked) {
+                cb.click();
+              }
+            });
+          });
+        }
+      });
+      
+      observer.observe(el, { childList: true, subtree: true });
+    }
+  ")
+
+m_gear
+
+```
+
+### Time
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+library(geojsonsf)
+
+# Convert sf object to clean GeoJSON string for client-side JavaScript
+geo_json_str <- sf_geojson(geo_data)
+
+# Compute spatial bounding box for initial map bounds
+bbox <- st_bbox(geo_data)
+
+# Build Time Map
+m_time <- leaflet(height = "800px", width = "800px") %>%
+  fitBounds(
+    lng1 = as.numeric(bbox["xmin"]), lat1 = as.numeric(bbox["ymin"]),
+    lng2 = as.numeric(bbox["xmax"]), lat2 = as.numeric(bbox["ymax"])
+  ) %>%
+  addProviderTiles(providers$USGS.USImagery, group = "USGS US Imagery") %>%
+  addTiles(group = "Open Street Map") %>%
+  addLayersControl(
+    baseGroups = c("USGS US Imagery", "Open Street Map"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  add_custom_legend()
+
+# Inject client-side TimeDimension animation using GeoJSON features
+m_time <- m_time %>% htmlwidgets::onRender(
+  sprintf("
+  function(el, x) {
+    var map = this;
+    var geoData = %s;
+
+    // Custom TimeDimension Date Control for Years
+    var TimeDimensionCustom = L.Control.TimeDimension.extend({
+      _getDisplayDateFormat: function(date) {
+        return date.getFullYear().toString();
+      }
+    });
+
+    // 1. Initialize TimeDimension
+    var timeDimension = new L.TimeDimension({
+      period: 'P1Y',
+      timeInterval: '1982-01-01T00:00:00Z/2026-01-01T00:00:00Z'
+    });
+    map.timeDimension = timeDimension;
+
+    // 2. Add TimeControl
+    var timeDimensionControl = new TimeDimensionCustom({
+      timeSliderDragUpdate: true,
+      loopButton: true,
+      position: 'topleft',
+      title: 'Year',
+      playerOptions: { transitionTime: 1000, loop: true },
+      displayDate: true,
+      autoPlay: false,
+      minSpeed: 1, maxSpeed: 5, speedStep: 1
+    });
+    map.addControl(timeDimensionControl);
+
+    // 3. Create Base GeoJSON layer
+    var baseGeoJsonLayer = L.geoJson(geoData, {
+      pointToLayer: function(feature, latlng) {
+        return L.circleMarker(latlng, {
+          radius: 8,
+          fillColor: feature.properties.fill_color || '#c2291b',
+          color: feature.properties.border_color || '#ffffff',
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.8
+        });
+      },
+      onEachFeature: function(feature, layer) {
+        if (feature.properties && feature.properties.popup_html) {
+          layer.bindPopup(feature.properties.popup_html);
+        }
+      }
+    });
+
+    // 4. Wrap in TimeDimension Layer (updateTimeDimension MUST be false to prevent recursion)
+    var timeLayer = L.timeDimension.layer.geoJson(baseGeoJsonLayer, {
+      updateTimeDimension: false,
+      duration: 'P1Y',
+      addlastPoint: false
+    });
+
+    timeLayer.addTo(map);
+  }
+  ",
+  geo_json_str
+  )
+)
+
+m_time
+
+```
+
+:::
+
 ## Crab Fishery Maps
+
+
 
 ```{r}
 #| echo: false
@@ -481,7 +931,36 @@ library(jsonlite)
 metadata <- fromJSON("data/items_crab_map.json")
 maptitle <- metadata$text
 shpfile_name <- metadata$shpfile
+```
 
+<h3> Crab Fisheries Activity Maps</h3>
+
+<div style="display: flex; gap: 10px; margin: 15px 0;">
+<button onclick="document.getElementById('about').showModal()"  class="btn-primary">
+      `r metadata$infotext$title[1]`
+</button>
+
+<dialog id="about">
+<h3> `r metadata$infotext$title[1]`</h3>
+`r metadata$infotext$text[1]`
+<button onclick="document.getElementById('about').close()">Close</button>
+</dialog>
+
+<button onclick="document.getElementById('research').showModal()"  class="btn-primary">
+      `r metadata$infotext$title[2]`
+</button>
+
+<dialog id="research">
+<h3> `r metadata$infotext$title[2]`</h3>
+        `r metadata$infotext$text[2]`
+<button onclick="document.getElementById('research').close()">Close</button>
+</dialog>
+</div>
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
 # Color scale configuration matching original Polymer element
 colors_df <- data.frame(
   name = c("> 560", "281 to 560", "141 to 280", "71 to 140", "36 to 70", "21 to 35", "< 21"),

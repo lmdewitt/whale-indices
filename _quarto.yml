@@ -2,6 +2,7 @@ project:
   type: website
   resources:
     - "crab_layers/*"
+    - "images/*"
 website:
   title: "Whale Entanglement Indicators"
   favicon: "images/favicon.ico"
