@@ -36,7 +36,7 @@
                 any::knitr
                 
           - name: Import data
-            run: Rscript update_dashboard.R
+            run: Rscript update_whale-indices.R
 
           - name: Set up Quarto
             uses: quarto-dev/quarto-actions/setup@v2
