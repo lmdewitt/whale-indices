@@ -34,6 +34,9 @@
                 any::tidyverse
                 any::rmarkdown
                 any::knitr
+                any::sf
+                any::leaflet
+                any::geojsonsf
                 
           - name: Import data
             run: Rscript update_whale-indices.R
