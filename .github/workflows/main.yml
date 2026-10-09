@@ -36,6 +36,7 @@
                 any::knitr
                 any::sf
                 any::leaflet
+                any::leaflet.extras
                 any::geojsonsf
                 
           - name: Import data
