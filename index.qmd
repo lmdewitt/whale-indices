@@ -18,8 +18,7 @@ format:
           
           <style>
             .legend {
-              background: rgba(255,255,255,0.55); !important;
-              background-color:  rgba(255,255,255,0.55); !important;
+              background: rgba(255,255,255,0.92); !important;
               padding: 4px;
               border-radius: 4px;
               vorder:none;
@@ -50,10 +49,10 @@ format:
               max-width: 220px;          /* Forces square card shape */
              /* max-height: 250px;*/
               overflow-y: auto;
-              margin-bottom: 80px !important; /* Lifts box up toward map midpoint */
+              margin-bottom: 100px !important; /* Lifts box up toward map midpoint */
             }
             .info.leaflet-control {
-              top: 10px;
+              top: 40px;
               }
             .leaflet-top.leaflet-right .leaflet-control-layers{
               top:60px;
@@ -166,9 +165,14 @@ ojs_define(allGroups = ojs_groups)
 
 ::: {#dashboard-tabset .panel-tabset .ojs-track-layout}
 
-## Dashboard
+## Indicators
 
-::::{.border .rounded .border-2 .border-light style="padding-left: 15px;"}
+<h3>Whale Entanglement Indicators</h3>
+<br>
+
+::: {#dashboard-series .panel-tabset .ojs-track-layout}
+
+### Time Series Plots
 
 *Jump to:*
 
@@ -178,8 +182,6 @@ ojs_define(allGroups = ojs_groups)
 * [Entanglement Reports](index.qmd#grp3)
 * [Prey Abundance - Central CA](index.qmd#grp4)
 * [Fixed Gear Fishery - Landings](index.qmd#grp5)
-
-::::
 
 ![](images/blue-whale_50.png) Whale icon represents key events and environmental conditions during 2016 (click on each whale for info)
 
@@ -447,9 +449,7 @@ html`${allGroups.map((group, groupIdx) => {
 
 ```
 
-
-
-## Indicator Information & Download
+### Indicator Information & Download
 
 
 ```{r}
@@ -478,7 +478,7 @@ for (group in json_data$items) {
       }
     if(group$title=="Upwelling Index - Daily")break
     ningr=ningr+1
-    if(ningr == 1)cat("### ",group$title, "\n\n",sep="")
+    if(ningr == 1)cat("#### ",group$title, "\n\n",sep="")
     clean_desc <- gsub("<[^>]+>", "", group$summary[[i]])
       title = indtitle
       description = trimws(clean_desc)
@@ -487,7 +487,7 @@ for (group in json_data$items) {
     csv = geturl(group$dsets[[i]],'csv',group$query[[i]],baseurl)
     html = geturl(group$dsets[[i]],'html',group$query[[i]],baseurl)
     
-    cat("#### **",title,"**\n",sep="")
+    cat("**",title,"**\n",sep="")
     cat(description,"\n\n",sep="")
     cat("*Institution*: ",institution,"\n\n",sep="")
     cat("*Time Range:* ", trange,"\n\n",sep="")
@@ -497,16 +497,18 @@ for (group in json_data$items) {
 
 ```
 
+:::
+
 ## Whale Entanglement Maps
 
 <h3>NMFS WCR Whale Entanglement Data 1982-2025</h3>
 
 <div style="display: flex; gap: 30px; margin: 15px 0;">
-[Dataset Information](https://www.fisheries.noaa.gov/resource/document/large-whale-entanglements-us-west-coast-1982-2017)
-[Download](https://oceanview.pfeg.noaa.gov/erddap/tabledap/WCRWhaleEntanglements.html)
+<div> [Dataset Information](https://www.fisheries.noaa.gov/resource/document/large-whale-entanglements-us-west-coast-1982-2017)</div>
+<div> [Download](https://oceanview.pfeg.noaa.gov/erddap/tabledap/WCRWhaleEntanglements.html)</div>
 </div>
 
-Filter Data By:
+***Filter Data By:***
 
 ::: {#dashboard-maps .panel-tabset .ojs-track-layout}
 
@@ -947,12 +949,12 @@ shpfile_name <- metadata$shpfile
 </dialog>
 
 <button onclick="document.getElementById('research').showModal()"  class="btn-primary">
-      `r metadata$infotext$title[2]`
+`r metadata$infotext$title[2]`
 </button>
 
 <dialog id="research">
 <h3> `r metadata$infotext$title[2]`</h3>
-        `r metadata$infotext$text[2]`
+`r metadata$infotext$text[2]`
 <button onclick="document.getElementById('research').close()">Close</button>
 </dialog>
 </div>
@@ -1131,5 +1133,3 @@ m <- m %>% htmlwidgets::onRender(
 m
 ```
 
-
-:::
